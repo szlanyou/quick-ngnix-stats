@@ -24,8 +24,10 @@ if __name__ == '__main__':
 
         ips = []
 
-        hits = []
+        hits = {}
         for line in lines:
+            line = line.strip()
+
             index = line.index('"')
         
             first = line[0:index]
@@ -53,16 +55,56 @@ if __name__ == '__main__':
 
             eventdatetime = dateutil.parser.parse(datetimestring)
 
-            if year == '2014' and month == 'Mar' and day == '12': 
-                hits.append( { 'ip':ip, 'datetime': str(eventdatetime), 'url': url } )
+            #if year == '2014' and month == 'Mar' and day == '12': 
+            key = '{0} {1} {2}'.format(month, day, year)
+            
+            try:
+                a = hits[key]
+            except:
+                hits[key] = []
 
-            if ip not in ips:
-                ips.append(ip)
+            bot = False
+            if 'bot' in line.lower():
+                bot = True
+            
+            hits[key].append( { 'ip':ip, 'datetime': str(eventdatetime), 'url': url, 'bot': bot } )
+
+            #try:
+            #    a = ips[key]
+            #except:
+            #    ips[key] = []            
+
+            #if ip not in ips[key]:
+            #    ips[key].append(ip)
 
     with open("{0}.json".format(filename),'w') as f:
         f.write(json.dumps(hits))
 
-    print "Number of hits: {0}".format(len(hits))
-    print "Unique IP addresses: {0}".format(len(ips))
+    for key,val in hits.iteritems():
+
+        print "\n{0}:".format(key)
+
+        print "\tTotal Hits:        {0}".format(len(hits[key]))
+
+        humanhits = 0
+        for i in range(0,len(hits[key])):
+            if hits[key][i]['bot'] == False:
+                humanhits+=1
+
+        print "\tHuman Hits:        {0}".format(humanhits)
+        
+        ips = []
+        humanips = 0
+        for i in range(0,len(hits[key])):
+            if hits[key][i]['ip'] not in ips:
+                ips.append(hits[key][i]['ip'])
+                if hits[key][i]['bot'] == False:
+                    humanips+=1
+
+        print "\tUnique Hits:       {0}".format(len(ips))
+
+        print "\tUnique Human Hits: {0}".format(humanips)
+
+
 
 
